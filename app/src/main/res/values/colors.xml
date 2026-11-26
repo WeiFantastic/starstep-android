@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色规范：深海蓝 -->
+    <color name="starstep_deep">#2E5C8A</color>
+    <color name="starstep_deep_dark">#1B3A5C</color>
+    <color name="starstep_accent">#5B8FD4</color>
+    <!-- 星星纸色卡 -->
+    <color name="star_sky">#7EC8E3</color>
+    <color name="star_cream">#F5F3E7</color>
+    <color name="star_mint">#A8D5BA</color>
+    <color name="star_rose">#E8B4B8</color>
+    <!-- 夜空背景 -->
+    <color name="night_bg">#0D1B2A</color>
+    <color name="night_surface">#12263A</color>
+    <!-- 图标 -->
+    <color name="ic_launcher_background">#2E5C8A</color>
+</resources>

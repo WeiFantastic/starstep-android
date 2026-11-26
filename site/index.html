@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>星阶 StarStep · 让低精力的你，看见自己走过的路</title>
+<style>
+  :root{
+    --bg:#0b1220;--bg2:#101a30;--panel:#16223c;--panel2:#1b2a49;--line:#2c3d63;
+    --ink:#f0f4fb;--muted:#a7b6d0;--accent:#7bb8f5;--gold:#f5c86b;--mint:#8fd9b6;--pink:#e9a8b8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{margin:0;color:var(--ink);background:
+    radial-gradient(900px 500px at 15% -5%,#22345c 0%,transparent 60%),
+    radial-gradient(700px 500px at 90% 10%,#1a2b4d 0%,transparent 55%),
+    linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px}
+  /* 星星背景 */
+  .sky{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5}
+  .sky i{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;box-shadow:0 0 6px #fff}
+  .cont{position:relative;z-index:1}
+  header{padding:70px 0 40px;text-align:center}
+  .logo{display:inline-flex;align-items:center;gap:10px;font-size:14px;letter-spacing:.18em;color:var(--accent);font-weight:700}
+  .logo .dot{width:9px;height:9px;background:var(--gold);border-radius:50%;box-shadow:0 0 12px var(--gold)}
+  h1{font-size:clamp(38px,9vw,64px);margin:22px 0 8px;letter-spacing:.04em;
+    background:linear-gradient(120deg,#fff,#bcd8ff 55%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .en{color:var(--muted);letter-spacing:.32em;font-size:13px;margin-bottom:26px}
+  .lead{font-size:clamp(16px,4vw,20px);color:#dbe6f7;max-width:620px;margin:0 auto 8px}
+  .lead-sub{color:var(--muted);font-size:14px;max-width:560px;margin:0 auto}
+  .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:15px 30px;border-radius:14px;
+    font-size:16px;font-weight:700;text-decoration:none;cursor:pointer;border:0;transition:.2s}
+  .btn-main{background:linear-gradient(135deg,#8cc6ff,#5a9bec);color:#08182e;box-shadow:0 10px 30px rgba(90,155,236,.35)}
+  .btn-main:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(90,155,236,.5)}
+  .btn-ghost{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--accent)}
+  .ver{margin-top:16px;font-size:12px;color:var(--muted)}
+  .ver b{color:var(--mint)}
+  .phone-show{margin:50px auto 10px;max-width:300px;background:var(--panel);border:1px solid var(--line);
+    border-radius:36px;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+  .screen{background:linear-gradient(180deg,#0e1930,#0a1324);border-radius:28px;padding:26px 20px 22px;min-height:430px;text-align:center}
+  .s-top{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:18px}
+  .s-mascot{font-size:52px;line-height:1;margin:14px 0 8px;filter:drop-shadow(0 0 18px rgba(123,184,245,.4))}
+  .s-title{font-size:19px;font-weight:700;margin-bottom:6px}
+  .s-desc{font-size:12px;color:var(--muted);margin-bottom:16px}
+  .s-input{background:#16233e;border:1px solid var(--line);border-radius:11px;padding:10px 12px;font-size:12px;
+    color:var(--muted);text-align:left;margin-bottom:9px}
+  .s-btn{background:linear-gradient(135deg,#8cc6ff,#5a9bec);color:#08182e;border-radius:11px;padding:11px;
+    font-size:13px;font-weight:700;margin-top:6px}
+  section{padding:56px 0;border-top:1px solid rgba(255,255,255,.05)}
+  .kicker{color:var(--accent);font-size:12px;letter-spacing:.22em;font-weight:700}
+  h2{font-size:clamp(24px,6vw,34px);margin:10px 0 28px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:680px){.steps{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .card .n{width:34px;height:34px;border-radius:10px;background:rgba(123,184,245,.15);color:var(--accent);
+    display:grid;place-items:center;font-weight:800;margin-bottom:14px}
+  .card h3{font-size:17px;margin:0 0 8px}
+  .card p{font-size:14px;color:var(--muted);margin:0}
+  .idea{display:flex;flex-direction:column;gap:12px}
+  .idea div{background:var(--panel);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:14px 18px;font-size:15px}
+  .idea b{color:var(--gold)}
+  .feat{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.feat{grid-template-columns:1fr}}
+  .feat div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:14px}
+  .feat span{color:var(--mint);font-weight:700;margin-right:6px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+  summary{cursor:pointer;font-weight:600}
+  details p{color:var(--muted);font-size:14px;margin:10px 0 0}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:36px 20px 50px;border-top:1px solid var(--line)}
+  code{background:#0d1629;border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-size:12px;color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="sky" id="sky"></div>
+<div class="cont">
+  <div class="wrap">
+    <header>
+      <div class="logo"><span class="dot"></span> STARSTEP · 星阶</div>
+      <h1>星阶</h1>
+      <div class="en">看见自己走过的路</div>
+      <p class="lead">给"想做却启动不了"的你：把日常固化为一条路线，一步步走。</p>
+      <p class="lead-sub">不用决策、不用毅力，只要点一下「开始」，雪球精灵带你走完第一步。每走完一次，折一颗星，铺成向上的阶梯。</p>
+      <div class="cta">
+        <a class="btn btn-main" href="./xingjie.apk" download="星阶.apk">⬇ 下载安卓版</a>
+        <a class="btn btn-ghost" href="#guide">使用说明</a>
+      </div>
+      <div class="ver">当前版本 <b>v0.2.0</b> · Android 8.0+ · 17 MB · 免费</div>
+
+      <div class="phone-show">
+        <div class="screen">
+          <div class="s-top"><span>9:41</span><span>●●● ▰</span></div>
+          <div class="s-mascot">❄️</div>
+          <div class="s-title">今天，从哪里开始？</div>
+          <div class="s-desc">写下此刻的样子和想去的地方</div>
+          <div class="s-input">现在的我：有点累，不想动</div>
+          <div class="s-input">想做到的：把桌子收拾一下</div>
+          <div class="s-btn">🌀 滚起来吧</div>
+        </div>
+      </div>
+    </header>
+
+    <section id="guide">
+      <div class="kicker">HOW TO USE</div>
+      <h2>三步上手</h2>
+      <div class="steps">
+        <div class="card"><div class="n">1</div><h3>说出此刻与目标</h3><p>首页两个框：「现在的我」和「想做到的」。不必精确，说人话就行——雪球精灵会帮你把模糊的想法变成一条路。</p></div>
+        <div class="card"><div class="n">2</div><h3>跟着一步步走</h3><p>路线生成后点「开始」。执行页一次只显示一步，做完点完成，雪球会播报下一步。卡住就跳过，跳过也算数。</p></div>
+        <div class="card"><div class="n">3</div><h3>折一颗星</h3><p>走完折一颗星，收进星阶墙。它会写一句话回信给你。回头看看，你已经走了这么远——这就是给低精力的人的反馈。</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">PHILOSOPHY</div>
+      <h2>三条底线</h2>
+      <div class="idea">
+        <div><b>只做正反馈。</b> 没有掉血、连胜清零、排名——行动力只增不减，错了随时重来。</div>
+        <div><b>不做无限细拆。</b> 粗/细两档，最多 12 步。拆太细反而让人更不想开始。</div>
+        <div><b>拆完立刻能执行。</b> 生成的路线当场就能播放，不做"存起来以后再说"的半成品。</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">FEATURES</div>
+      <h2>你会用到</h2>
+      <div class="feat">
+        <div><span>✦</span>双框意图捕获，把纠结变成路线</div>
+        <div><span>✦</span>语音播报下一步，手不用离开</div>
+        <div><span>✦</span>到点自动开始，把"启动"交给系统</div>
+        <div><span>✦</span>行动力 +2 即时反馈，每次都算数</div>
+        <div><span>✦</span>折星 + 雪球回信，看得见的成长</div>
+        <div><span>✦</span>精力曲线，找到你的高效时段</div>
+        <div><span>✦</span>离线可用，数据只存在你手机里</div>
+        <div><span>✦</span>设置页可检查更新、可一键反馈</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">FAQ</div>
+      <h2>常见问题</h2>
+      <details><summary>安装时提示"未知来源"？</summary><p>这是正常的安全提示。选择「允许本次安装」即可。小米/华为若被纯净模式拦截，去 设置 → 安全 → 关闭纯净模式。</p></details>
+      <details><summary>需要联网吗？</summary><p>核心功能完全离线可用。只有「检查最新版本」需要联网，其余数据都只存在你手机本地。</p></details>
+      <details><summary>语音没声音？</summary><p>检查媒体音量；语音用系统 TTS，个别机型缺中文语音包会静默，不影响其他功能。</p></details>
+      <details><summary>数据会上传吗？</summary><p>不会。所有路线、星星、精力记录都只存在本机（DataStore），App 没有账号、不采集个人信息。</p></details>
+      <details><summary>怎么恢复初始数据？</summary><p>设置页底部「恢复演示数据」，会重置为 8 条路线、34 颗星的演示状态。</p></details>
+    </section>
+  </div>
+  <footer>星阶 StarStep · v0.2.0 · 一个给低精力的人的行为激活工具<br>本页由星阶项目发布 · 反馈请加 QQ 1183295524</footer>
+</div>
+<script>
+  // 星星背景
+  (function(){var sky=document.getElementById('sky'),h='';for(var i=0;i<60;i++){
+    h+='<i style="left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;opacity:'+(0.2+Math.random()*0.6)+'"></i>';}
+    sky.innerHTML=h;})();
+</script>
+</body>
+</html>

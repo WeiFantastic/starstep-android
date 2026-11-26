@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">星阶</string>
+    <string name="nav_today">今天</string>
+    <string name="nav_star">星阶</string>
+    <string name="nav_routes">路线</string>
+    <string name="nav_status">状态</string>
+</resources>

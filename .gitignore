@@ -1,0 +1,28 @@
+# Gradle / 构建产物
+.gradle/
+build/
+app/build/
+.kotlin/
+local.properties
+*.iml
+.idea/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时截图 / 登录二维码（含会话信息，不入仓库）
+*.png
+*.jpg
+*.jpeg
+drop-*.png
+activate-page.png
+花生壳*.png
+
+# 构建的二进制产物（源码仓库不放，走 Releases / 发布站点）
+*.apk
+*.zip
+
+# 说明：发布站点 site/ 内的 index.html、version.json 纳入版本管理；
+# site/xingjie.apk 为其运行依赖，通过发布工作流单独同步，不纳入 git。
+site/xingjie.apk

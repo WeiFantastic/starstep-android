@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 一颗立体五角星，星阶主视觉 -->
+    <path
+        android:fillColor="#7EC8E3"
+        android:pathData="M54,26 L62.6,45.2 L83.4,47 L67.8,60.8 L72.5,81.2 L54,70.2 L35.5,81.2 L40.2,60.8 L24.6,47 L45.4,45.2 Z" />
+    <path
+        android:fillColor="#F5F3E7"
+        android:pathData="M54,26 L62.6,45.2 L54,41 L45.4,45.2 Z" />
+</vector>
