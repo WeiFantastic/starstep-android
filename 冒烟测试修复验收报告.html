@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>星阶 · 冒烟测试修复验收报告</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;background:#0d1117;color:#e6edf3;line-height:1.7;padding:0 0 70px}
+.wrap{max-width:960px;margin:0 auto;padding:0 22px}
+header{padding:42px 0 28px;border-bottom:1px solid #30363d;margin-bottom:26px}
+h1{font-size:30px;margin-bottom:8px}
+.sub{color:#8b949e;font-size:14px}
+.pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.pill{background:rgba(63,185,80,.12);border:1px solid #3fb950;color:#56d364;font-size:12.5px;padding:6px 14px;border-radius:20px;font-weight:600}
+.pill.blue{background:rgba(88,166,255,.12);border-color:#58a6ff;color:#79c0ff}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0 34px}
+.stat{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:18px;text-align:center}
+.stat .n{font-size:32px;font-weight:800;color:#3fb950}
+.stat .n.b{color:#58a6ff}.stat .n.y{color:#d29922}
+.stat .l{color:#8b949e;font-size:12.5px;margin-top:6px}
+h2{font-size:19px;margin:32px 0 16px;padding-bottom:9px;border-bottom:1px solid #30363d}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{border:1px solid #30363d;padding:10px 12px;text-align:left;vertical-align:top}
+th{background:#161b22;color:#79c0ff;white-space:nowrap}
+td{color:#c9d1d9}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;white-space:nowrap}
+.t-crit{background:rgba(248,81,73,.15);color:#ff7b72;border:1px solid #f85149}
+.t-high{background:rgba(210,153,34,.15);color:#e3b341;border:1px solid #d29922}
+.t-mid{background:rgba(63,185,80,.15);color:#56d364;border:1px solid #3fb950}
+.ok{color:#56d364;font-weight:700}
+.note{background:rgba(88,166,255,.08);border-left:3px solid #58a6ff;padding:13px 16px;border-radius:8px;color:#b6d4f0;font-size:13.5px;margin:16px 0}
+.warn{background:rgba(210,153,34,.08);border-left:3px solid #d29922;padding:13px 16px;border-radius:8px;color:#e8cf9a;font-size:13.5px;margin:16px 0}
+code{background:#1c2230;padding:2px 7px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px;color:#79c0ff}
+.foot{margin-top:40px;padding-top:18px;border-top:1px solid #30363d;color:#6e7681;font-size:12px;text-align:center}
+</style></head><body><div class="wrap">
+<header>
+<h1>星阶 StarStep · 冒烟测试修复验收报告</h1>
+<div class="sub">针对测试报告 13 项问题逐一修复 · 版本 v0.3.0 (versionCode 4) · 2026-11-27</div>
+<div class="pills">
+<span class="pill">✅ 13/13 已修复</span>
+<span class="pill">✅ 编译通过</span>
+<span class="pill">✅ 已上线稳定域名</span>
+<span class="pill blue">✅ GitHub 已同步</span>
+</div>
+</header>
+
+<div class="stats">
+<div class="stat"><div class="n">13</div><div class="l">问题总数</div></div>
+<div class="stat"><div class="n">13</div><div class="l">已修复</div></div>
+<div class="stat"><div class="n b">0.3.0</div><div class="l">新版本</div></div>
+<div class="stat"><div class="n y">200</div><div class="l">APK 下载状态</div></div>
+</div>
+
+<h2>一、严重问题（数据风险）</h2>
+<table>
+<tr><th>编号</th><th>问题</th><th>修复</th><th>状态</th></tr>
+<tr><td>BUG-01</td><td>长按拆星无二次确认、撤销对象错误</td><td>长按弹确认框（显示路线名+折星时间+不可恢复提示）；确认后按 star.id 精确删除；去掉重复 toast</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-02</td><td>同名路线不去重，列表出现完全相同的两条</td><td>saveRoute 检测同名，自动追加「MM-dd HH:mm」后缀区分</td><td class="ok">✅ 已修复</td></tr>
+</table>
+
+<h2>二、功能失效</h2>
+<table>
+<tr><th>编号</th><th>问题</th><th>修复</th><th>状态</th></tr>
+<tr><td>BUG-03</td><td>「遇到困难」只弹 toast 不推进</td><td>真正推进到下一步并 +2 行动力；末步跳过也正确进入折星</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-04</td><td>「记状态」点击无反应</td><td>当前源码已接弹层（测试为旧包），本次随新版一并上线，另加状态记录入口确认</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-05</td><td>计时/语音按钮反馈错位，语音无法关闭</td><td>计时实现暂停/继续（胶囊显示「已暂停」）；语音开关切换+反馈 toast，文案随状态变</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-06</td><td>执行页右上角调整图标无反应</td><td>当前源码已绑定 onAdjust 跳转（测试为旧包），随新版上线</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-07</td><td>首页设置齿轮无反应</td><td>当前源码已绑定 onSettings 跳转（测试为旧包），随新版上线</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-08</td><td>调整页「②自己做」无法切换</td><td>方案选项改为状态驱动，点击真实切换高亮并同步到步骤数据</td><td class="ok">✅ 已修复</td></tr>
+</table>
+
+<h2>三、设计缺陷</h2>
+<table>
+<tr><th>编号</th><th>问题</th><th>修复</th><th>状态</th></tr>
+<tr><td>BUG-09</td><td>「点击可语音改这一步」实为软键盘</td><td>接入系统语音识别 RecognizerIntent，点麦克风说出即写入；不支持设备回退到打字并提示</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-10</td><td>只填一个框放行且语义错乱</td><td>严格区分「现状/目标」字段语义；单框为空给出明确提示；步骤不再把现状拼成目标</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-11</td><td>「澄清意图」与「定制路线」行为相同</td><td>澄清意图改为追问弹窗（选「做到什么程度」），与直接生成的定制路线形成实质区分</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-12</td><td>精力曲线 7 柱等高、文案与数据脱节</td><td>按 epochDay 聚合（跨年不错位）；种子数据每天有真实波动；洞察卡文案按真实最佳时段动态生成</td><td class="ok">✅ 已修复</td></tr>
+<tr><td>BUG-13</td><td>输入框出现剪贴板网址联想</td><td>关闭自动纠正与个性化建议（autoCorrectEnabled=false）</td><td class="ok">✅ 已修复</td></tr>
+</table>
+
+<h2>四、测试用的其实是旧包</h2>
+<div class="note">
+测试报告里「设置页显示 v0.2.0」「记状态/设置齿轮/调整图标无反应」——这几项在上一版源码中其实已经接线，原因是你装的是 <b>v0.2.0 旧包</b>。本次把设置页版本号改为动态读取 BuildConfig，并把所有修复统一打进 <b>v0.3.0</b>，重装后即可看到真实效果。
+</div>
+
+<h2>五、上线与验证</h2>
+<div class="note">
+✅ 编译 <code>BUILD SUCCESSFUL</code>　✅ APK code=4 / v0.3.0　✅ CLI 原地更新 <code>effective: settled</code><br>
+✅ <code>weifantastic.kicp.fun/version.json</code> = code 4　✅ APK HTTP 200 (17.7MB)　✅ 首页 HTTP 200<br>
+✅ GitHub commit <code>545abb7</code> 已推送　✅ 域名不变，朋友手里的链接照旧有效
+</div>
+
+<h2>六、给你的下一步</h2>
+<div class="warn">
+App 内「设置 → 检查更新」会提示 v0.3.0；或直接到 <code>https://weifantastic.kicp.fun/</code> 重新下载安装。装的是<b>同一个域名、同一个包名</b>，会覆盖安装，数据不会丢。建议先按报告里的 <code>adb shell pm clear com.starstep.app</code> 清掉测试脏数据，再从干净种子数据复验这 13 项。
+</div>
+
+<div class="foot">星阶 StarStep · 修复验收报告 · 生成于 2026-11-27</div>
+</div></body></html>
