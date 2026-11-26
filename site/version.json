@@ -1,9 +1,9 @@
 {
-  "versionCode": 2,
-  "versionName": "0.2.0",
-  "downloadUrl": "https://a27c80533834c7c1d.app-tencent.workbuddy.host/xingjie.apk?sharecode=LHN357TIM6",
-  "downloadPage": "https://a27c80533834c7c1d.app-tencent.workbuddy.host/?sharecode=LHN357TIM6",
-  "changelog": "新增版本自动检查与意见反馈入口",
+  "versionCode": 3,
+  "versionName": "0.2.1",
+  "downloadUrl": "https://ctazvz.kicp.fun/xingjie.apk",
+  "downloadPage": "https://ctazvz.kicp.fun",
+  "changelog": "修复提示条深色背景，链接改用公网地址",
   "forceUpdate": false,
-  "publishDate": "2026-11-26"
+  "publishDate": "2026-11-27"
 }

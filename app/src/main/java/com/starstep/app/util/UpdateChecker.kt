@@ -22,8 +22,8 @@ data class UpdateInfo(
  * 只有明确发现 versionCode 更高时才提示。
  */
 object UpdateChecker {
-    // 线上版本源（发布站点地址，含访问码）
-    const val VERSION_URL = "https://a27c80533834c7c1d.app-tencent.workbuddy.host/version.json?sharecode=LHN357TIM6"
+    // 线上版本源（花生壳已认领的稳定域名；如域名变更只需改这一行）
+    const val VERSION_URL = "https://ctazvz.kicp.fun/version.json"
     const val FEEDBACK_QQ = "1183295524"
     const val FEEDBACK_URL = "mqq://im/chat?chat_type=wpa&uin=1183295524"
 

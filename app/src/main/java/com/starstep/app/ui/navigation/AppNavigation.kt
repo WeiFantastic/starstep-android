@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
@@ -26,6 +27,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.starstep.app.ui.components.BottomTabBar
 import com.starstep.app.ui.components.ToastHost
+import com.starstep.app.ui.theme.Deep
+import com.starstep.app.ui.theme.Ink
 import com.starstep.app.ui.screens.*
 import com.starstep.app.util.TtsHelper
 import com.starstep.app.viewmodel.StarStepViewModel
@@ -115,7 +118,15 @@ fun AppNavigation(vm: StarStepViewModel = viewModel()) {
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Deep,
+                    contentColor = Ink
+                )
+            }
+        },
         bottomBar = {
             if (showTab) {
                 BottomTabBar(
