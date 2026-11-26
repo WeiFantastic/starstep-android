@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星阶 · 更新稳定域名指引</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(160deg,#0b1220,#16223c);color:#f0f4fb;line-height:1.7;padding:30px 16px;min-height:100vh}
+  .wrap{max-width:720px;margin:0 auto}
+  h1{font-size:26px;margin-bottom:6px;color:#fff}
+  .sub{color:#a7b6d0;font-size:14px;margin-bottom:24px}
+  .card{background:rgba(255,255,255,.05);border:1px solid #2c3d63;border-radius:16px;padding:22px;margin-bottom:16px}
+  h2{font-size:17px;color:#7bb8f5;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  h2 .n{background:#7bb8f5;color:#0b1220;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;font-weight:800}
+  .step{margin-bottom:14px;font-size:14.5px;color:#dbe6f7}
+  .step b{color:#f5c86b}
+  code{background:#0d1629;border:1px solid #2c3d63;padding:2px 8px;border-radius:6px;color:#8fd9b6;font-size:13px}
+  .url{display:inline-block;background:rgba(123,184,245,.12);border:1px solid #7bb8f5;border-radius:10px;padding:8px 14px;
+    color:#8cc6ff;font-weight:700;margin:6px 0;font-size:15px;word-break:break-all}
+  .file{display:inline-block;background:rgba(245,200,107,.12);border:1px solid #f5c86b;border-radius:10px;padding:8px 14px;
+    color:#f5c86b;font-weight:700;margin:6px 0}
+  .note{background:rgba(245,200,107,.1);border-left:3px solid #f5c86b;padding:12px 16px;border-radius:8px;
+    color:#f0dcae;font-size:13.5px;margin-top:10px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  th,td{padding:9px 10px;border:1px solid #2c3d63;text-align:left}
+  th{background:rgba(123,184,245,.12);color:#8cc6ff}
+  .ok{color:#8fd9b6;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>星阶 · 更新稳定域名内容</h1>
+  <p class="sub">把新版 v0.2.1 更新到你的稳定域名，域名不变，朋友链接照旧</p>
+
+  <div class="card">
+    <h2><span class="n">✓</span> 已就绪的信息</h2>
+    <div class="step">稳定域名：<span class="url">https://weifantastic.kicp.fun/</span></div>
+    <div class="step">要上传的发布包：<span class="file">星阶-app-发布包.zip</span>（17MB，含新版 APK + 修正后的 version.json + 清理后的下载页）</div>
+    <div class="step">新版版本号：<b>v0.2.1（versionCode 3）</b>——修好了提示条白底、检查更新读内网地址两个 bug</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">1</span> 登录花生壳控制台</h2>
+    <div class="step">在你<b>自己电脑的浏览器</b>打开 <code>https://console.oray.com</code>，用微信扫码或手机号登录（认领资源时的那个账号）。</div>
+    <div class="step">进入 <b>静态托管 / 文件托管</b> 管理页（或打开 <code>https://drop.ficp.fun</code> 后点右上角「控制台」）。</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span> 找到稳定域名对应的资源</h2>
+    <div class="step">在资源列表里找到托管地址为 <span class="url">weifantastic.kicp.fun</span> 的那条记录。</div>
+    <div class="step">点开它，找 <b>「更新文件 / 替换内容 / 重新上传」</b> 之类的按钮（不同版本控制台文案略有差异）。</div>
+    <div class="note">如果控制台没有"更新文件"入口，而是只能"删除重建"——先别删！把这一情况截图发我，我改用 CLI + 你提供的账号 token 原地更新，避免域名丢失。</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">3</span> 上传新版发布包</h2>
+    <div class="step">选择 <span class="file">星阶-app-发布包.zip</span> 上传，等待发布完成。</div>
+    <div class="step">上传后<b>确认域名仍是 weifantastic.kicp.fun</b>（不要生成新链接）。</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">4</span> 告诉我，我来验收</h2>
+    <div class="step">传完回我一句"传好了"，我会自动验证下面几项：</div>
+    <table>
+      <tr><th>检查项</th><th>期望结果</th></tr>
+      <tr><td>稳定域名 version.json</td><td class="ok">versionCode=3 / v0.2.1</td></tr>
+      <tr><td>下载链接</td><td class="ok">指向 weifantastic.kicp.fun/xingjie.apk</td></tr>
+      <tr><td>APK 下载</td><td class="ok">HTTP 200，17MB</td></tr>
+      <tr><td>下载页</td><td class="ok">无重复反馈区块</td></tr>
+      <tr><td>App 检查更新</td><td class="ok">提示发现新版本 v0.2.1</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">→</span> 以后发版（更简单）</h2>
+    <div class="step">改完代码后敲一条命令：<code>./发布.sh "本次更新说明"</code></div>
+    <div class="step">脚本自动升版本号、编译、打包。你只需把打好的 ZIP 按上面第 2-3 步更新到<b>同一个稳定域名</b>即可——域名再也不用变，App 也不用改代码。</div>
+  </div>
+
+</div>
+</body>
+</html>
