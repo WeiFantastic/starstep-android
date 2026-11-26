@@ -352,17 +352,52 @@ class StarStepViewModel(app: Application) : AndroidViewModel(app) {
         update { st -> st.copy(energyRecords = listOf(record) + st.energyRecords) }
     }
 
-    /** 精力洞察：按小时段聚合，找出高频高能时段；样本不足时返回 null */
+    /**
+     * 精力洞察：从真实记录里算出最佳时段、周内最佳日、近期趋势与样本量。
+     * 修复「洞察卡文案固定」：原先只看单一小时均值，种子数据的午后恒定偏高，
+     * 文案永远一样。现在把多个维度交给界面，文案随记录真实变化。
+     * 样本不足（<8 条）时返回 null，界面降级为「记录得越多越准」。
+     */
     fun energyInsight(): EnergyInsight? {
         val records = _state.value?.energyRecords ?: return null
         if (records.size < 8) return null
-        val buckets = records.groupBy { (it.at / 3_600_000L) % 24 }
+
+        val zone = java.time.ZoneId.systemDefault()
+
+        // 1) 时段聚合：按 3 小时一段（0-2/3-5/.../21-23）取平均，找高能段
+        val buckets = records.groupBy { (java.time.Instant.ofEpochMilli(it.at).atZone(zone).hour) / 3 }
             .mapValues { (_, list) -> list.map { it.level }.average() }
-        val bestHour = (buckets.maxByOrNull { it.value }?.key ?: return null).toInt()
-        val avg = buckets[bestHour.toLong()] ?: return null
-        val start = bestHour
-        val end = (bestHour + 5) % 24
-        return EnergyInsight(start, end, avg)
+        val bestBucket = buckets.maxByOrNull { it.value } ?: return null
+        val start = bestBucket.key * 3
+        val end = (start + 3) % 24
+        val avg = bestBucket.value
+
+        // 2) 周内最佳日：按星期几聚合，找平均精力最高的一天
+        val byWeekday = records.groupBy {
+            java.time.Instant.ofEpochMilli(it.at).atZone(zone).dayOfWeek.value // 1=周一..7=周日
+        }.mapValues { (_, list) -> list.map { it.level }.average() }
+        val bestWeekday = byWeekday.maxByOrNull { it.value }?.key
+
+        // 3) 近期趋势：最近 7 天均值 vs 更早一段均值，判定向好/走低/平稳
+        val now = System.currentTimeMillis()
+        val dayMs = 86_400_000L
+        val recent = records.filter { now - it.at <= 7 * dayMs }.map { it.level }
+        val earlier = records.filter { it.at < now - 7 * dayMs }.map { it.level }
+        val trend = when {
+            recent.isEmpty() || earlier.isEmpty() -> 0
+            recent.average() - earlier.average() >= 0.35 -> 1
+            earlier.average() - recent.average() >= 0.35 -> -1
+            else -> 0
+        }
+
+        return EnergyInsight(
+            startHour = start,
+            endHour = end,
+            avgLevel = avg,
+            sampleCount = records.size,
+            bestWeekday = bestWeekday,
+            trend = trend
+        )
     }
 
     // ---------- 设置 ----------
@@ -417,4 +452,11 @@ sealed interface UiEvent {
 /** 一次性事件包装：id 保证每次 emit 都是新值，避免 StateFlow 同值去重导致事件丢失 */
 data class EventWrapper(val id: Long, val event: UiEvent)
 
-data class EnergyInsight(val startHour: Int, val endHour: Int, val avgLevel: Double)
+data class EnergyInsight(
+    val startHour: Int,
+    val endHour: Int,
+    val avgLevel: Double,
+    val sampleCount: Int = 0,       // 样本量，文案会提示可信度
+    val bestWeekday: Int? = null,   // 1=周一..7=周日，周内最佳日
+    val trend: Int = 0              // 1=近期向好 -1=近期走低 0=平稳
+)

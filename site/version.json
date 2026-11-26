@@ -1,9 +1,9 @@
 {
-  "versionCode": 4,
-  "versionName": "0.3.0",
+  "versionCode": 5,
+  "versionName": "0.3.1",
   "downloadUrl": "https://weifantastic.kicp.fun/xingjie.apk",
   "downloadPage": "https://weifantastic.kicp.fun",
-  "changelog": "v0.3.0：修复13项问题（拆星二次确认/路线去重/跳过计入/语音识别/精力曲线/选项切换等）",
+  "changelog": "v0.3.1：修复旧数据重复ID导致的启动崩溃、0/0空完成页卡死、半输入放行、洞察文案不随数据变化",
   "forceUpdate": false,
   "publishDate": "2026-11-27"
 }

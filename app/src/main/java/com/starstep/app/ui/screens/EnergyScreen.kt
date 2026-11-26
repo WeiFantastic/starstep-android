@@ -40,6 +40,7 @@ import com.starstep.app.ui.theme.InkSub
 import com.starstep.app.ui.theme.NightBg
 import com.starstep.app.ui.theme.NightSurface
 import com.starstep.app.ui.theme.StarSky
+import com.starstep.app.viewmodel.EnergyInsight
 import com.starstep.app.viewmodel.StarStepViewModel
 
 /** 精力状态：近 7 天曲线 + 洞察卡 + 四档打卡，数据三处汇聚 */
@@ -81,15 +82,12 @@ fun EnergyScreen(state: AppState, vm: StarStepViewModel) {
         }
 
         Spacer(Modifier.height(16.dp))
-        // 洞察卡
+        // 洞察卡：文案由真实数据拼装，随记录变化（BUG-14 修复）
         if (insight != null) {
             InfoCard {
                 Text("你的节奏", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = StarSky)
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    "${periodLabel(insight.startHour)}是你的高能时段（${pad(insight.startHour)}:00–${pad(insight.endHour)}:00 平均精力 ${fmt(insight.avgLevel)}/5）。把「启动最难」的路线排到这里，会更省力。",
-                    fontSize = 14.sp, color = Ink, lineHeight = 24.sp
-                )
+                Text(buildInsightText(insight), fontSize = 14.sp, color = Ink, lineHeight = 24.sp)
             }
         } else {
             InfoCard {
@@ -160,3 +158,36 @@ private fun periodLabel(startHour: Int): String = when (startHour) {
     in 18..21 -> "傍晚到夜里"
     else -> "这段时间"
 }
+
+/**
+ * 洞察文案：由最佳时段 + 周内最佳日 + 近期趋势 + 样本量动态拼装。
+ * 每一段都来自真实记录，记录变化后文案会跟着变，不再是固定一句话。
+ */
+private fun buildInsightText(insight: EnergyInsight): String {
+    val sb = StringBuilder()
+
+    // 主句：最佳时段 + 该时段平均精力
+    sb.append("${periodLabel(insight.startHour)}（${pad(insight.startHour)}:00–${pad((insight.startHour + 3) % 24)}:00）")
+    sb.append("是你精力最高的时段，平均 ${fmt(insight.avgLevel)}/5。")
+
+    // 第二句：周内最佳日
+    insight.bestWeekday?.let { wd ->
+        sb.append("一周里 ${weekdayName(wd)} 状态最好，")
+    }
+
+    // 第三句：趋势
+    when (insight.trend) {
+        1 -> sb.append("而且最近在慢慢变好。")
+        -1 -> sb.append("最近有点走低，先别给自己太大压力。")
+        else -> sb.append("整体节奏比较稳。")
+    }
+
+    // 收尾：建议 + 样本量可信度
+    sb.append("把最难启动的路线排到这里，会更省力。")
+    sb.append("（基于 ${insight.sampleCount} 次记录）")
+
+    return sb.toString()
+}
+
+private fun weekdayName(wd: Int): String =
+    listOf("一", "二", "三", "四", "五", "六", "日").getOrNull(wd - 1) ?: "这几天"

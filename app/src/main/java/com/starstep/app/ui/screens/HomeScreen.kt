@@ -78,6 +78,24 @@ fun HomeScreen(
     val granularity = if (state.settings.granularity == "coarse") "今天粗一点" else "细一点"
     val recentRoutes = state.routes.sortedByDescending { it.lastDoneAt }.take(2)
 
+    // 半输入不放行：三个入口共用同一校验，「现状」和「目标」都必须填。
+    // 只填一个时给出针对性提示，不再生成语义不明的路线。
+    fun requireBoth(): Boolean {
+        if (current.isBlank() && goal.isBlank()) {
+            vm.emit(UiEvent.Toast("先说说现在在做什么、想做什么吧"))
+            return false
+        }
+        if (current.isBlank()) {
+            vm.emit(UiEvent.Toast("再填一下「我现在在做什么」"))
+            return false
+        }
+        if (goal.isBlank()) {
+            vm.emit(UiEvent.Toast("再填一下「我想做什么」，好帮你定目标"))
+            return false
+        }
+        return true
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -131,11 +149,7 @@ fun HomeScreen(
             SecondaryButton(
                 "澄清意图",
                 onClick = {
-                    when {
-                        goal.isBlank() && current.isBlank() -> vm.emit(UiEvent.Toast("先说说你想做什么吧"))
-                        goal.isBlank() -> vm.emit(UiEvent.Toast("再填一下「我想做什么」，好帮你定目标"))
-                        else -> showClarify = true   // BUG-11：进入追问，不直接生成
-                    }
+                    if (requireBoth()) showClarify = true   // BUG-11：进入追问，不直接生成
                 },
                 modifier = Modifier.weight(1f)
             )
@@ -143,10 +157,9 @@ fun HomeScreen(
             SecondaryButton(
                 "定制路线",
                 onClick = {
-                    when {
-                        goal.isBlank() && current.isBlank() -> vm.emit(UiEvent.Toast("先说说你想做什么吧"))
-                        goal.isBlank() -> vm.emit(UiEvent.Toast("再填一下「我想做什么」，好帮你定目标"))
-                        else -> { vm.prepareDraft(current, goal); onGenerate() }
+                    if (requireBoth()) {
+                        vm.prepareDraft(current, goal)
+                        onGenerate()
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -166,10 +179,7 @@ fun HomeScreen(
 
         Spacer(Modifier.height(20.dp))
         PrimaryButton("滚动起来吧", onClick = {
-            if (current.isBlank() && goal.isBlank()) {
-                vm.emit(UiEvent.Toast("先说说你想做什么吧"))
-                return@PrimaryButton
-            }
+            if (!requireBoth()) return@PrimaryButton
             val route = vm.prepareDraft(current, goal)
             vm.saveRoute(route)
             vm.startRoute(route.id)

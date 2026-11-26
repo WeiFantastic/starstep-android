@@ -54,6 +54,29 @@ fun FoldScreen(
     onWriteNote: (String) -> Unit
 ) {
     val route = state.session?.routeId?.let { id -> state.routes.firstOrNull { it.id == id } }
+    val hasValidSession = state.session != null && route != null
+    var autoReturned by remember { mutableStateOf(false) }
+
+    // 自愈：任何异常落到完成页但会话已失效（折星后会话被清空、旧数据残留等），
+    // 自动返回星阶墙。杜绝「0/0 空完成页」卡在栈里、底部 Tab 切不出去的问题。
+    LaunchedEffect(hasValidSession) {
+        if (!hasValidSession && !autoReturned) {
+            autoReturned = true
+            onStarWall()
+        }
+    }
+
+    if (!hasValidSession) {
+        Column(
+            Modifier.fillMaxSize().background(NightBg),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("这条路线已收好，正在返回星阶墙…", color = InkSub, fontSize = 14.sp)
+        }
+        return
+    }
+
     val color = com.starstep.app.ui.theme.colorForKey(route?.colorKey ?: "sky")
     val reduceMotion = state.settings.reduceMotion
 

@@ -198,9 +198,20 @@ fun AppNavigation(vm: StarStepViewModel = viewModel()) {
                         routeId = id,
                         state = appState,
                         vm = vm,
-                        onFold = { navController.navigate(Routes.FOLD) },
+                        // 完成最后一步进入折星页时移除执行页：
+                        // 避免完成后按返回又退回执行页、被 LaunchedEffect 重新开一局，
+                        // 也避免 FOLD/EXECUTE 在栈里交替残留
+                        onFold = {
+                            navController.navigate(Routes.FOLD) {
+                                popUpTo(Routes.withArg(Routes.EXECUTE, id)) { inclusive = true }
+                            }
+                        },
                         onAdjust = { navController.navigate(Routes.withArg(Routes.ADJUST, id)) },
-                        onBack = { navController.popBackStack() }
+                        // 中途退出：若处于「待折星」完成态，顺手清掉会话，防止下次启动残留
+                        onBack = {
+                            if (appState.session?.active == false) vm.abandonSession()
+                            navController.popBackStack()
+                        }
                     )
                 }
                 composable(Routes.FOLD) {
@@ -208,11 +219,20 @@ fun AppNavigation(vm: StarStepViewModel = viewModel()) {
                         state = appState,
                         vm = vm,
                         onStarWall = {
+                            // 兜底：收进星阶时若会话仍在（例如动画被跳过），确保清掉
+                            if (appState.session != null) vm.abandonSession()
                             navController.navigate(Routes.STAR_WALL) {
                                 popUpTo(Routes.HOME) { saveState = true }
+                                launchSingleTop = true
                             }
                         },
-                        onWriteNote = { starId -> navController.navigate(Routes.withArg(Routes.RECEIPT, starId)) }
+                        // 写留言：折星已在页面内完成，同时把折星页移出栈，
+                        // 这样从回执页返回不会再退到「0/0 空完成页」
+                        onWriteNote = { starId ->
+                            navController.navigate(Routes.withArg(Routes.RECEIPT, starId)) {
+                                popUpTo(Routes.FOLD) { inclusive = true }
+                            }
+                        }
                     )
                 }
                 composable(Routes.STAR_WALL) {
@@ -229,7 +249,19 @@ fun AppNavigation(vm: StarStepViewModel = viewModel()) {
                         state = appState,
                         vm = vm,
                         onAgain = { routeId -> navController.navigate(Routes.withArg(Routes.EXECUTE, routeId)) },
-                        onBack = { navController.popBackStack() }
+                        // 回执页返回统一回星阶墙，避免退回空的 FOLD 完成页；
+                        // 从星阶墙点开星星进来时，popBackStack 也能正确回到星阶墙
+                        onBack = {
+                            val prev = navController.previousBackStackEntry?.destination?.route
+                            if (prev == Routes.FOLD || prev == Routes.argRoute(Routes.EXECUTE)) {
+                                navController.navigate(Routes.STAR_WALL) {
+                                    popUpTo(Routes.HOME) { saveState = true }
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                navController.popBackStack()
+                            }
+                        }
                     )
                 }
                 composable(Routes.argRoute(Routes.ADJUST)) { entry ->
