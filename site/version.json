@@ -1,8 +1,8 @@
 {
   "versionCode": 3,
   "versionName": "0.2.1",
-  "downloadUrl": "https://ctazvz.kicp.fun/xingjie.apk",
-  "downloadPage": "https://ctazvz.kicp.fun",
+  "downloadUrl": "https://weifantastic.kicp.fun/xingjie.apk",
+  "downloadPage": "https://weifantastic.kicp.fun",
   "changelog": "修复提示条深色背景，链接改用公网地址",
   "forceUpdate": false,
   "publishDate": "2026-11-27"

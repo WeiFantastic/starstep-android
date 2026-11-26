@@ -23,7 +23,7 @@ data class UpdateInfo(
  */
 object UpdateChecker {
     // 线上版本源（花生壳已认领的稳定域名；如域名变更只需改这一行）
-    const val VERSION_URL = "https://ctazvz.kicp.fun/version.json"
+    const val VERSION_URL = "https://weifantastic.kicp.fun/version.json"
     const val FEEDBACK_QQ = "1183295524"
     const val FEEDBACK_URL = "mqq://im/chat?chat_type=wpa&uin=1183295524"
 
