@@ -3,6 +3,7 @@ package com.starstep.app.ui.screens
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +48,7 @@ import com.starstep.app.ui.theme.Accent
 import com.starstep.app.ui.theme.Ink
 import com.starstep.app.ui.theme.InkSub
 import com.starstep.app.ui.theme.NightBg
+import com.starstep.app.ui.theme.NightLine
 import com.starstep.app.ui.theme.NightSurface
 import com.starstep.app.ui.theme.StarSky
 import com.starstep.app.ui.theme.colorForKey
@@ -65,6 +71,10 @@ fun ReceiptScreen(
     val reduceMotion = state.settings.reduceMotion
     var unfolded by remember { mutableStateOf(reduceMotion) }
     val unfold = remember { Animatable(0f) }
+
+    // 留言编辑弹窗状态
+    var showNoteEditor by remember { mutableStateOf(false) }
+    var noteDraft by remember { mutableStateOf(star?.note ?: "") }
 
     LaunchedEffect(Unit) {
         if (reduceMotion) unfold.snapTo(1f)
@@ -104,18 +114,29 @@ fun ReceiptScreen(
         }
 
         Spacer(Modifier.height(28.dp))
-        // 纸条本体：手写体风格
+        // 纸条本体：手写体风格，点一下即可补写/修改留言
         Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(NightSurface).padding(24.dp)
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(NightSurface)
+                .clickable {
+                    noteDraft = star.note
+                    showNoteEditor = true
+                }
+                .padding(24.dp)
         ) {
-            Text("当时写的", fontSize = 11.sp, color = InkSub)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("当时写的", fontSize = 11.sp, color = InkSub, modifier = Modifier.weight(1f))
+                Text("✎ 点击${if (star.note.isBlank()) "补写" else "编辑"}", fontSize = 11.sp, color = Accent)
+            }
             Spacer(Modifier.height(12.dp))
             Text(
-                if (star.note.isNotBlank()) star.note else "（当时没有留言）",
+                if (star.note.isNotBlank()) star.note else "（当时没有留言，点这里写一句）",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 fontStyle = FontStyle.Italic,
-                color = Ink,
+                color = if (star.note.isNotBlank()) Ink else InkSub,
                 lineHeight = 32.sp
             )
         }
@@ -149,6 +170,44 @@ fun ReceiptScreen(
             }, modifier = Modifier.weight(1f))
         }
         Spacer(Modifier.height(24.dp))
+    }
+
+    // 留言编辑弹窗：真正可输入的输入框，保存后即时更新回执展示
+    if (showNoteEditor) {
+        AlertDialog(
+            onDismissRequest = { showNoteEditor = false },
+            containerColor = NightSurface,
+            title = { Text("写一句给自己的话", color = Ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+            text = {
+                Column {
+                    Text("记下当时或此刻想说的话，只有你看得到", color = InkSub, fontSize = 12.sp)
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = noteDraft,
+                        onValueChange = { noteDraft = it },
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        placeholder = { Text("比如：慢慢来，先把第一题写完就好", color = InkSub, fontSize = 13.sp) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Ink,
+                            unfocusedTextColor = Ink,
+                            focusedBorderColor = Accent,
+                            unfocusedBorderColor = NightLine,
+                            cursorColor = Accent
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.updateStarNote(star.id, noteDraft)
+                    showNoteEditor = false
+                }) { Text("保存", color = Accent) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNoteEditor = false }) { Text("取消", color = InkSub) }
+            }
+        )
     }
 }
 

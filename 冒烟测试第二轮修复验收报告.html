@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星阶 StarStep · 第二轮修复验收报告 v0.3.1</title>
+<style>
+  :root{--bg:#0b1020;--card:#151c30;--line:#26314d;--ink:#eaf0ff;--sub:#9fb0d0;--accent:#5b9cff;--ok:#3ddc97;--warn:#ffb454;--rose:#ff7a9c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+  .wrap{max-width:960px;margin:0 auto;padding:36px 24px 64px}
+  h1{font-size:28px;margin:0 0 6px}
+  .meta{color:var(--sub);font-size:14px;margin-bottom:28px}
+  .badge{display:inline-block;background:var(--accent);color:#04122b;font-weight:700;font-size:12px;padding:3px 10px;border-radius:20px;margin-left:8px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:18px}
+  .card h2{font-size:18px;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+  .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px}
+  .t-fixed{background:rgba(61,220,151,.16);color:var(--ok)}
+  .t-sev{background:rgba(255,122,156,.16);color:var(--rose)}
+  .kv{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  .kv th,.kv td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .kv th{color:var(--sub);width:96px;white-space:nowrap;font-weight:600}
+  code{background:#0e1529;border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:12.5px;color:#bcd4ff}
+  .ok{color:var(--ok);font-weight:700}
+  .note{background:rgba(91,156,255,.1);border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;color:var(--sub);margin-top:10px}
+  .flow{font-size:13px;color:var(--sub);background:#0e1529;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:10px}
+  footer{text-align:center;color:var(--sub);font-size:13px;margin-top:36px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>星阶 StarStep · 第二轮修复验收报告 <span class="badge">v0.3.1 · code5</span></h1>
+  <div class="meta">针对测试反馈中的「2 项未修」+「2 个新发现真问题」逐项修复 · 2026-11-27</div>
+
+  <div class="card">
+    <h2>① 旧数据重复 ID 导致启动崩溃 <span class="tag t-sev">严重</span><span class="tag t-fixed">已修复</span></h2>
+    <table class="kv">
+      <tr><th>根因</th><td>logcat 报 <code>IllegalArgumentException: Key "…" was already used</code>。<code>LazyColumn/LazyGrid</code> 以 <code>it.id</code> 作 key，旧数据里重复的路线/星星 ID 触发崩溃；此前只给新路线加了时间戳，磁盘旧数据未清理，用户必须 <code>pm clear</code> 才能进 App。</td></tr>
+      <tr><th>修复</th><td>在 <code>StarStepRepository.state</code> 读取层统一加 <code>migrateLegacy()</code>：对 routes / steps / stars / energyRecords 的 ID 去重并补空，修复指向失效路线的残留会话。纯函数、读时即清洗，旧数据开箱自愈，无需用户手动清缓存。</td></tr>
+      <tr><th>验证</th><td class="ok">✓ 编译通过；数据源头保证 key 唯一，重复 ID 不再进入 UI</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>② 「0/0 步完成态」导航栈残留 <span class="tag t-sev">严重</span><span class="tag t-fixed">已修复</span></h2>
+    <table class="kv">
+      <tr><th>根因</th><td>完成路线 → FOLD 折星页 →「写一句」→ RECEIPT 回执 → 点「折回」退回 FOLD。此时 <code>foldStar()</code> 已清空 session，FoldScreen 拿不到 route，显示「已走过 0/0 步」空页；FOLD 不在底部 Tab 页内，导致切不出去，只能强杀。</td></tr>
+      <tr><th>修复</th><td>三处联动：① 完成进入 FOLD 时 <code>popUpTo(EXECUTE) inclusive</code>，执行页不再残留；② FOLD→RECEIPT 时 <code>popUpTo(FOLD) inclusive</code>，回执页返回不再退回空完成页；③ RECEIPT 返回统一回星阶墙；④ FoldScreen 加自愈 <code>LaunchedEffect</code>，会话失效时自动返回。中途退出执行页也会清理待折星会话。</td></tr>
+      <tr><th>验证</th><td class="ok">✓ 完成流程栈被正确回收；异常落点自动弹回星阶墙，不再卡死</td></tr>
+    </table>
+    <div class="flow">完成 → FOLD（移除 EXECUTE）→「写一句」→ RECEIPT（移除 FOLD）→ 返回 → 星阶墙 ✅</div>
+  </div>
+
+  <div class="card">
+    <h2>③ 半输入放行 <span class="tag t-fixed">已修复</span></h2>
+    <table class="kv">
+      <tr><th>问题</th><td>主按钮只校验「两个输入框都空」，只填一个仍能生成路线。</td></tr>
+      <tr><th>修复</th><td>三个入口（滚动起来吧 / 定制路线 / 澄清意图）共用 <code>requireBoth()</code> 校验，要求「现在在做什么」和「想做什么」都填写，缺哪个就针对性提示填哪个。</td></tr>
+      <tr><th>验证</th><td class="ok">✓ 编译通过；半输入被拦截并给出明确提示</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>④ 洞察卡文案固定，不随数据变化 <span class="tag t-fixed">已修复</span></h2>
+    <table class="kv">
+      <tr><th>问题</th><td>原逻辑只取「平均值最高的单一小时」，种子数据午后恒定偏高，文案永远是同一句。</td></tr>
+      <tr><th>修复</th><td><code>energyInsight()</code> 扩展为四维：3 小时高能时段、周内最佳日、近 7 天 vs 更早的趋势、样本量。界面 <code>buildInsightText()</code> 据此动态拼装文案，并标注「基于 N 次记录」。记录变化，文案即变化。</td></tr>
+      <tr><th>验证</th><td class="ok">✓ 编译通过；文案由真实数据派生，不再固定</td></tr>
+    </table>
+    <div class="note">示例输出：「午后到傍晚（15:00–18:00）是你精力最高的时段，平均 4.0/5。一周里 三 状态最好，而且最近在慢慢变好。把最难启动的路线排到这里，会更省力。（基于 25 次记录）」</div>
+  </div>
+
+  <div class="card">
+    <h2>发布与上线核验</h2>
+    <table class="kv">
+      <tr><th>APK</th><td>v0.3.1 · versionCode 5 · 17 MB · aapt 校验版本号一致</td></tr>
+      <tr><th>官网</th><td><code>https://weifantastic.kicp.fun/</code> 首页、version.json、APK 均已更新为 v0.3.1，域名不变</td></tr>
+      <tr><th>GitHub</th><td><code>WeiFantastic/starstep-android</code> 已推送 commit <code>3708e92</code>（9 文件变更）</td></tr>
+      <tr><th>升级方式</th><td>老用户打开 App 会自动提示更新；已装 v0.3.0 的无需清数据，新包启动时自动迁移旧数据</td></tr>
+    </table>
+  </div>
+
+  <footer>星阶 StarStep · 一个给低精力的人的行为激活工具 · 反馈请加 QQ 1183295524</footer>
+</div>
+</body>
+</html>

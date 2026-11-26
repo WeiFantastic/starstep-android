@@ -1,9 +1,9 @@
 {
-  "versionCode": 5,
-  "versionName": "0.3.1",
+  "versionCode": 6,
+  "versionName": "0.3.2",
   "downloadUrl": "https://weifantastic.kicp.fun/xingjie.apk",
   "downloadPage": "https://weifantastic.kicp.fun",
-  "changelog": "v0.3.1：修复旧数据重复ID导致的启动崩溃、0/0空完成页卡死、半输入放行、洞察文案不随数据变化",
+  "changelog": "v0.3.2：回执页可点「当时写的」补写/修改留言，真正可输入，新旧星星都支持",
   "forceUpdate": false,
   "publishDate": "2026-11-27"
 }

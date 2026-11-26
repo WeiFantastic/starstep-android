@@ -323,6 +323,18 @@ class StarStepViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * 更新星星留言：回执页可随时补写/修改当时的话。
+     * 按 id 精确匹配，只改 note 字段，不影响星星其它数据。
+     */
+    fun updateStarNote(starId: String, note: String) {
+        val trimmed = note.trim()
+        update { st ->
+            st.copy(stars = st.stars.map { if (it.id == starId) it.copy(note = trimmed) else it })
+        }
+        emit(UiEvent.Toast(if (trimmed.isBlank()) "已清空留言" else "已写下这句话 ✦"))
+    }
+
     /** 拆星撤销：回到待办，行动力和统计回退 */
     fun undoFold(star: Star) {
         update { st ->
