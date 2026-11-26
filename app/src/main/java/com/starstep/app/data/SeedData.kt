@@ -147,18 +147,29 @@ object SeedData {
         }.sortedByDescending { it.finishedAt }
     }
 
-    /** 近 7 天精力记录：故意呈现午后偏高，呼应洞察卡 */
+    /** 近 7 天精力记录：每天有真实波动、午后偏高，呼应洞察卡与曲线柱高 */
     private fun buildEnergy(now: Long): List<EnergyRecord> {
         val list = mutableListOf<EnergyRecord>()
-        val cal = java.util.Calendar.getInstance()
+        // 每天的基础精力不同，让 7 根柱子有高低（修复 BUG-12：原来每天平均都是 3.0 → 等高）
+        val dayBase = listOf(2, 4, 3, 4, 3, 2, 3) // 对应 6 天前 → 今天
         for (d in 6 downTo 0) {
-            cal.timeInMillis = now
-            cal.add(java.util.Calendar.DAY_OF_YEAR, -d)
-            // 每天 2-3 条，午后时段给出更高档位
-            val hours = listOf(9, 15, 20)
-            hours.forEachIndexed { idx, h ->
+            for (slot in 0..2) {
+                val cal = java.util.Calendar.getInstance()
+                cal.timeInMillis = now
+                cal.add(java.util.Calendar.DAY_OF_YEAR, -d)
+                val hours = listOf(9, 15, 20)
+                val h = hours[slot]
                 cal.set(java.util.Calendar.HOUR_OF_DAY, h)
-                val level = if (h == 15) 4 else if (h == 9) 2 + (idx % 2) else 3
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                // 午后 +1（封顶 4），早晚按当天基础值轻微波动
+                val base = dayBase[6 - d]
+                val level = when (h) {
+                    15 -> minOf(4, base + 1)
+                    9 -> maxOf(1, base - 1)
+                    else -> base
+                }
                 list.add(
                     EnergyRecord(
                         id = "e_${d}_$h",

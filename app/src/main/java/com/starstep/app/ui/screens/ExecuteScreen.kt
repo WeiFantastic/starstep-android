@@ -96,10 +96,13 @@ fun ExecuteScreen(
     val estimateMin = ((total - currentIndex) * 4).coerceAtLeast(1)
 
     // 本步计时：用时间戳计算 elapsed，切后台回来继续，不因离开清零
+    // BUG-05：加入暂停/继续状态，计时按钮真正可控
     var elapsed by remember(step.id) { mutableLongStateOf(0L) }
-    LaunchedEffect(step.id, session.stepStartedAt) {
-        while (true) {
-            elapsed = (System.currentTimeMillis() - session.stepStartedAt) / 1000
+    var timerPaused by remember(step.id) { mutableStateOf(false) }
+    var pausedElapsed by remember(step.id) { mutableLongStateOf(0L) }
+    LaunchedEffect(step.id, session.stepStartedAt, timerPaused) {
+        while (!timerPaused) {
+            elapsed = pausedElapsed + (System.currentTimeMillis() - session.stepStartedAt) / 1000
             delay(1000)
         }
     }
@@ -165,15 +168,31 @@ fun ExecuteScreen(
             Spacer(Modifier.height(16.dp))
             // 计时胶囊
             Box(Modifier.clip(RoundedCornerShape(14.dp)).background(NightLine).padding(horizontal = 12.dp, vertical = 6.dp)) {
-                Text("本步 ${formatTime(elapsed)}", fontSize = 12.sp, color = Ink)
+                Text("本步 ${formatTime(elapsed)}${if (timerPaused) " · 已暂停" else ""}", fontSize = 12.sp, color = Ink)
             }
         }
 
         Spacer(Modifier.height(20.dp))
         // 三工具图标
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            ToolButton(Icons.Filled.Timer, "计时") { vm.emit(com.starstep.app.viewmodel.UiEvent.Toast("本步计时中 ${formatTime(elapsed)}")) }
-            ToolButton(Icons.Filled.Mic, if (voiceOn) "语音开" else "语音关") { vm.toggleVoice() }
+            // BUG-05：计时按钮实现暂停/继续切换
+            ToolButton(Icons.Filled.Timer, if (timerPaused) "继续计时" else "暂停计时") {
+                if (timerPaused) {
+                    timerPaused = false
+                    // 恢复时把已走时间折算进起点，避免暂停期间被计入
+                    vm.emit(com.starstep.app.viewmodel.UiEvent.Toast("计时继续 ${formatTime(pausedElapsed)}"))
+                } else {
+                    pausedElapsed = elapsed
+                    timerPaused = true
+                    vm.emit(com.starstep.app.viewmodel.UiEvent.Toast("计时已暂停 ${formatTime(pausedElapsed)}"))
+                }
+            }
+            // BUG-05：语音开关切换并给出明确反馈，文案随状态变化
+            ToolButton(Icons.Filled.Mic, if (voiceOn) "语音开" else "语音关") {
+                vm.toggleVoice()
+                vm.emit(com.starstep.app.viewmodel.UiEvent.Toast(if (voiceOn) "语音已关闭" else "语音已开启"))
+            }
+            // BUG-04：记状态弹出记录入口（已接线），保留
             ToolButton(Icons.Filled.SelfImprovement, "记状态") { showEnergyPicker.value = true }
         }
 

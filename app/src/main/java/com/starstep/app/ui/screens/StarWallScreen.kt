@@ -21,7 +21,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -62,6 +64,8 @@ fun StarWallScreen(
     onOpenStar: (String) -> Unit
 ) {
     var filter by remember { mutableStateOf("全部") }
+    // BUG-01：待撤销的星星，长按先弹二次确认，确认后才按 id 精确删除
+    var pendingUndo by remember { mutableStateOf<com.starstep.app.data.Star?>(null) }
     val rank = StarRanks.rankOf(state.stars.size)
     val next = StarRanks.nextRank(state.stars.size)
     val remain = next?.let { it.threshold - state.stars.size } ?: 0
@@ -124,10 +128,7 @@ fun StarWallScreen(
                         index = state.stars.indexOf(star),
                         reduceMotion = state.settings.reduceMotion,
                         onClick = { onOpenStar(star.id) },
-                        onLongClick = {
-                            vm.undoFold(star)
-                            vm.emit(UiEvent.Toast("已拆回，随时可以再来"))
-                        }
+                        onLongClick = { pendingUndo = star }
                     )
                 }
             }
@@ -139,6 +140,37 @@ fun StarWallScreen(
                 ?: vm.emit(UiEvent.Toast("还没有星星"))
         })
         Spacer(Modifier.height(16.dp))
+    }
+
+    // BUG-01：拆星二次确认，明确告知撤销哪一颗，确认后按 id 精确删除
+    val target = pendingUndo
+    if (target != null) {
+        AlertDialog(
+            onDismissRequest = { pendingUndo = null },
+            containerColor = NightSurface,
+            title = { Text("拆掉这颗星？", color = Ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+            text = {
+                Column {
+                    Text("路线：${target.routeName}", color = Ink, fontSize = 14.sp)
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "折于 ${java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(target.finishedAt))} · ${target.stepsTotal} 步",
+                        color = InkSub, fontSize = 12.sp
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text("撤销后不可恢复，行动力与这条路线的数据会一起回退。", color = InkSub, fontSize = 12.sp)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.undoFold(target)   // 内部按 target.id 精确删除，并发出一次 toast
+                    pendingUndo = null
+                }) { Text("确认拆掉", color = com.starstep.app.ui.theme.StarRose) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingUndo = null }) { Text("再想想", color = InkSub) }
+            }
+        )
     }
 }
 

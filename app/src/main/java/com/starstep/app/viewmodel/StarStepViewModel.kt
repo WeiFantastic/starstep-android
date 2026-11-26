@@ -76,23 +76,32 @@ class StarStepViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- 意图与路线 ----------
 
-    /** 根据「现状→目标」和粒度生成路线草案 */
+    /**
+     * 根据「现状→目标」和粒度生成路线草案。
+     * 修复 BUG-10：严格区分两个字段语义——「现状」只作为起步语境写入描述，
+     * 「目标」才作为路线标题与行动方向；任一字段缺失都生成通顺的通用步骤，不再把现状当目标拼接。
+     */
     fun generateRoute(current: String, goal: String): Route {
         val s = _state.value?.settings ?: Settings()
         val coarse = s.granularity == "coarse"
-        val target = goal.ifBlank { "离开${current.ifBlank { "现在" }}" }
+        val nowText = current.trim()
+        val goalText = goal.trim()
+        // 目标缺失时给中性目标，绝不把现状当成要去的地方
+        val target = goalText.ifBlank { "开始做一件正事" }
+        // 现状只作为「从哪里起步」的软语境，不直接拼进步骤标题
+        val fromHint = if (nowText.isNotBlank()) "你现在${nowText}，不用急着摆脱它，" else ""
         val steps = if (coarse) {
             listOf(
-                Step(uid(), "先离开${current.ifBlank { "原地" }}", "只做这一步，别想后面", durationSec = 60),
-                Step(uid(), "做最容易开始的那一小步", "别追求完整，先写、先读、先做第一题", durationSec = 300),
+                Step(uid(), "先做一个最小的动作", "${fromHint}只做这一步，别想后面", durationSec = 60),
+                Step(uid(), "朝「${deriveName(target)}」走一小步", "别追求完整，先写、先读、先做第一题", durationSec = 300),
                 Step(uid(), "再往前推一点点", "做到这里就已经很好了", durationSec = 300)
             )
         } else {
             listOf(
-                Step(uid(), "先坐起来", "", durationSec = 30),
+                Step(uid(), "先坐起来", fromHint, durationSec = 30),
                 Step(uid(), "把要用的东西放到手边", "", durationSec = 60),
-                Step(uid(), "离开${current.ifBlank { "原地" }}", "", durationSec = 60),
-                Step(uid(), "做最容易开始的那一小步", "先写、先读、先做第一题", durationSec = 180),
+                Step(uid(), "做一个两分钟的启动动作", "先写、先读、先做第一题", durationSec = 60),
+                Step(uid(), "朝「${deriveName(target)}」做一小步", "", durationSec = 180),
                 Step(uid(), "继续往下做一题", "", durationSec = 300),
                 Step(uid(), "检查一遍", "", durationSec = 180),
                 Step(uid(), "收尾", "做到这里就够了", durationSec = 120)
@@ -126,8 +135,17 @@ class StarStepViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** 保存路线：同名自动追加时间后缀，避免「最近的路」出现完全相同的两条（BUG-02） */
     fun saveRoute(route: Route) {
-        update { st -> st.copy(routes = listOf(route) + st.routes) }
+        update { st ->
+            val duplicated = st.routes.any { it.name == route.name }
+            val finalRoute = if (duplicated) {
+                val stamp = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault())
+                    .format(java.util.Date())
+                route.copy(name = "${route.name} · $stamp")
+            } else route
+            st.copy(routes = listOf(finalRoute) + st.routes)
+        }
     }
 
     fun updateRoute(route: Route) {
@@ -204,25 +222,51 @@ class StarStepViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** 遇到困难：跳过本步，不给惩罚，只降低步长建议 */
+    /**
+     * 遇到困难：跳过也算数——真正推进到下一步并计入行动力，不给惩罚。
+     * 修复 BUG-03：旧版只弹 toast 不推进，这里让文案与实际行为一致。
+     */
     fun skipStep(): StepResult {
         val st = _state.value ?: return StepResult.Error
         val session = st.session ?: return StepResult.Error
         val route = st.routes.firstOrNull { it.id == session.routeId } ?: return StepResult.Error
+        val completed = session.completedSteps + session.currentStep
         val next = session.currentStep + 1
-        emit(UiEvent.Toast("没关系，跳过也算数"))
+        val now = System.currentTimeMillis()
+        emit(UiEvent.Toast("没关系，跳过也算数，已到下一步"))
         return if (next >= route.steps.size) {
+            // 最后一步也跳过：同样累计行动力与完成统计，再进入折星
+            update { s ->
+                s.copy(
+                    actionPower = s.actionPower + 2,
+                    routes = s.routes.map {
+                        if (it.id == route.id) it.copy(
+                            totalCompletions = it.totalCompletions + 1,
+                            lastDoneAt = now,
+                            recentDurations = (listOf(((now - session.startedAt) / 60000).toInt().coerceAtLeast(1)) + it.recentDurations).take(5)
+                        ) else it
+                    },
+                    session = session.copy(
+                        currentStep = next,
+                        completedSteps = completed,
+                        stepStartedAt = now,
+                        active = false
+                    )
+                )
+            }
             StepResult.RouteFinished(route)
         } else {
             update { s ->
                 s.copy(
+                    actionPower = s.actionPower + 2,
                     session = session.copy(
                         currentStep = next,
-                        completedSteps = session.completedSteps + session.currentStep,
-                        stepStartedAt = System.currentTimeMillis()
+                        completedSteps = completed,
+                        stepStartedAt = now
                     )
                 )
             }
+            speak(route.steps[next].title)
             StepResult.NextStep(route.steps[next])
         }
     }

@@ -2,6 +2,7 @@ package com.starstep.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.starstep.app.data.AppState
@@ -69,6 +72,8 @@ fun HomeScreen(
 ) {
     var current by remember { mutableStateOf("") }
     var goal by remember { mutableStateOf("") }
+    // BUG-11：澄清意图的追问弹窗状态
+    var showClarify by remember { mutableStateOf(false) }
     val scroll = rememberScrollState()
     val granularity = if (state.settings.granularity == "coarse") "今天粗一点" else "细一点"
     val recentRoutes = state.routes.sortedByDescending { it.lastDoneAt }.take(2)
@@ -126,23 +131,22 @@ fun HomeScreen(
             SecondaryButton(
                 "澄清意图",
                 onClick = {
-                    if (current.isBlank() && goal.isBlank()) {
-                        vm.emit(UiEvent.Toast("先说说你想做什么吧"))
-                    } else {
-                        vm.prepareDraft(current, goal)
-                        onGenerate()
+                    when {
+                        goal.isBlank() && current.isBlank() -> vm.emit(UiEvent.Toast("先说说你想做什么吧"))
+                        goal.isBlank() -> vm.emit(UiEvent.Toast("再填一下「我想做什么」，好帮你定目标"))
+                        else -> showClarify = true   // BUG-11：进入追问，不直接生成
                     }
                 },
                 modifier = Modifier.weight(1f)
             )
+            // BUG-11：定制路线直接生成；澄清意图走追问流程（见下方 clarify 弹窗）
             SecondaryButton(
                 "定制路线",
                 onClick = {
-                    if (current.isBlank() && goal.isBlank()) {
-                        vm.emit(UiEvent.Toast("先说说你想做什么吧"))
-                    } else {
-                        vm.prepareDraft(current, goal)
-                        onGenerate()
+                    when {
+                        goal.isBlank() && current.isBlank() -> vm.emit(UiEvent.Toast("先说说你想做什么吧"))
+                        goal.isBlank() -> vm.emit(UiEvent.Toast("再填一下「我想做什么」，好帮你定目标"))
+                        else -> { vm.prepareDraft(current, goal); onGenerate() }
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -195,6 +199,50 @@ fun HomeScreen(
         }
         Spacer(Modifier.height(24.dp))
     }
+
+    // BUG-11：澄清追问——先确认"这次最想做到哪一步"，再据此生成，和"定制路线"形成实质区分
+    if (showClarify) {
+        val clarifications = listOf(
+            "只开个头就好，别要求做完",
+            "完成最核心的那一小块",
+            "坚持到约定时间，慢慢来"
+        )
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showClarify = false },
+            containerColor = NightSurface,
+            title = { Text("把目标说清楚一点", color = Ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+            text = {
+                Column {
+                    Text("你想做：$goal", color = InkSub, fontSize = 13.sp)
+                    Spacer(Modifier.height(14.dp))
+                    Text("这次做到什么程度就算数？", color = Ink, fontSize = 14.sp)
+                    Spacer(Modifier.height(8.dp))
+                    clarifications.forEach { c ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NightLine.copy(alpha = 0.18f))
+                                .clickable {
+                                    vm.prepareDraft(current, "$goal · $c")
+                                    showClarify = false
+                                    onGenerate()
+                                }
+                                .padding(14.dp)
+                        ) {
+                            Text(c, color = Accent, fontSize = 14.sp)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { showClarify = false }) {
+                    Text("取消", color = InkSub)
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -214,6 +262,12 @@ private fun IntentField(
             .height(60.dp),
         shape = RoundedCornerShape(14.dp),
         singleLine = true,
+        // BUG-13：关闭自动纠正/个性化学习，避免输入法把剪贴板里的网址当候选词
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Done,
+            autoCorrectEnabled = false
+        ),
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = Ink,
             unfocusedTextColor = Ink,

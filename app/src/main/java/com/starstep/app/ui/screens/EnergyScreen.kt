@@ -41,7 +41,6 @@ import com.starstep.app.ui.theme.NightBg
 import com.starstep.app.ui.theme.NightSurface
 import com.starstep.app.ui.theme.StarSky
 import com.starstep.app.viewmodel.StarStepViewModel
-import java.util.Calendar
 
 /** 精力状态：近 7 天曲线 + 洞察卡 + 四档打卡，数据三处汇聚 */
 @Composable
@@ -50,21 +49,23 @@ fun EnergyScreen(state: AppState, vm: StarStepViewModel) {
     var selectedLevel by remember { mutableIntStateOf(3) }
     val insight = vm.energyInsight()
 
-    // 近 7 天聚合（按天取平均）
+    // 近 7 天聚合（按 epochDay 取平均，跨年也不会错位）—— 修复 BUG-12
     val dailyLevels = remember(state.energyRecords) {
-        val cal = Calendar.getInstance()
-        val today = cal.get(Calendar.DAY_OF_YEAR)
+        val todayEpochDay = java.time.LocalDate.now().toEpochDay()
         (6 downTo 0).map { d ->
-            val targetDay = today - d
+            val targetDay = todayEpochDay - d
             val levels = state.energyRecords.filter {
-                val c = Calendar.getInstance()
-                c.timeInMillis = it.at
-                c.get(Calendar.DAY_OF_YEAR) == targetDay
+                java.time.Instant.ofEpochMilli(it.at).atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate().toEpochDay() == targetDay
             }.map { it.level }
             if (levels.isEmpty()) 0.0 else levels.average()
         }
     }
-    val dayLabels = listOf("一", "二", "三", "四", "五", "六", "日")
+    // 日期标签按真实星期显示（周一=一 … 周日=日）
+    val dayLabels = (6 downTo 0).map { d ->
+        val dow = java.time.LocalDate.now().minusDays(d.toLong()).dayOfWeek.value // 1=周一 … 7=周日
+        listOf("一", "二", "三", "四", "五", "六", "日")[dow - 1]
+    }
 
     Column(Modifier.fillMaxSize().background(NightBg).verticalScroll(scroll).padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(20.dp))
@@ -86,7 +87,7 @@ fun EnergyScreen(state: AppState, vm: StarStepViewModel) {
                 Text("你的节奏", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = StarSky)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "午后到傍晚是你的高能时段（${pad(insight.startHour)}:00–${pad(insight.endHour)}:00 平均精力 ${fmt(insight.avgLevel)}/5）。把「启动最难」的路线排到这里，会更省力。上午不必强求。",
+                    "${periodLabel(insight.startHour)}是你的高能时段（${pad(insight.startHour)}:00–${pad(insight.endHour)}:00 平均精力 ${fmt(insight.avgLevel)}/5）。把「启动最难」的路线排到这里，会更省力。",
                     fontSize = 14.sp, color = Ink, lineHeight = 24.sp
                 )
             }
@@ -150,3 +151,12 @@ private fun EnergyChart(levels: List<Double>, labels: List<String>) {
 
 private fun fmt(v: Double) = String.format("%.1f", v)
 private fun pad(h: Int) = h.toString().padStart(2, '0')
+
+/** 根据真实最佳时段返回口语化描述，避免文案与实际数据自相矛盾 */
+private fun periodLabel(startHour: Int): String = when (startHour) {
+    in 5..10 -> "清晨到上午"
+    in 11..13 -> "中午前后"
+    in 14..17 -> "午后到傍晚"
+    in 18..21 -> "傍晚到夜里"
+    else -> "这段时间"
+}

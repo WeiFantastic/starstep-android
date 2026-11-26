@@ -65,7 +65,7 @@ fun SettingsScreen(state: AppState, vm: StarStepViewModel, onBack: () -> Unit) {
             onBack()
         }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(20.dp))
-        Text("星阶 StarStep · v0.2.0", fontSize = 11.sp, color = InkSub, modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text("星阶 StarStep · v${com.starstep.app.BuildConfig.VERSION_NAME}", fontSize = 11.sp, color = InkSub, modifier = Modifier.align(Alignment.CenterHorizontally))
         Spacer(Modifier.height(24.dp))
     }
 }
