@@ -23,7 +23,9 @@ data class Settings(
     val voiceGuide: Boolean = true,      // 语音引导
     val autoStart: Boolean = true,       // 到点自动开始第一步 / 自动推进
     val reduceMotion: Boolean = false,   // 减少动态效果
-    val granularity: String = "coarse"   // coarse=粗一点(默认) / fine=细一点
+    val granularity: String = "coarse",  // coarse=粗一点(默认) / fine=细一点
+    val hasSeenGuide: Boolean = false,   // 是否看过首次快速上手引导
+    val lastSeenVersionCode: Int = 0     // 上次弹过更新说明的版本号，用于「更新后首次打开只弹一次」
 )
 
 /** 路线（SOP） */

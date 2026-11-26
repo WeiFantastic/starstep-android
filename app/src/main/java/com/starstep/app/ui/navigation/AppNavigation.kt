@@ -26,7 +26,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.starstep.app.ui.components.BottomTabBar
+import com.starstep.app.ui.components.GuideDialog
+import com.starstep.app.ui.components.HelpDialog
 import com.starstep.app.ui.components.ToastHost
+import com.starstep.app.ui.components.WhatsNewDialog
 import com.starstep.app.ui.theme.Deep
 import com.starstep.app.ui.theme.Ink
 import com.starstep.app.ui.screens.*
@@ -59,6 +62,9 @@ fun AppNavigation(vm: StarStepViewModel = viewModel()) {
     val state by vm.state.collectAsState()
     val event by vm.event.collectAsState()
     val update by vm.update.collectAsState()
+    val showGuide by vm.showGuide.collectAsState()
+    val showWhatsNew by vm.showWhatsNew.collectAsState()
+    val showHelp by vm.showHelp.collectAsState()
     val context = LocalContext.current
     val tts = remember { TtsHelper(context) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -93,8 +99,8 @@ fun AppNavigation(vm: StarStepViewModel = viewModel()) {
     }
     val appState = state!!
 
-    // 发现新版本时的提示弹窗（静默检查结果，无更新时不显示）
-    if (update != null) {
+    // 发现新版本时的提示弹窗（静默检查结果，无更新时不显示；说明类弹窗打开时让位，避免叠加）
+    if (update != null && !showGuide && !showWhatsNew && !showHelp) {
         val info = update!!
         AlertDialog(
             onDismissRequest = { if (!info.forceUpdate) vm.dismissUpdate() },
@@ -115,6 +121,13 @@ fun AppNavigation(vm: StarStepViewModel = viewModel()) {
                 TextButton(onClick = { vm.dismissUpdate() }) { androidx.compose.material3.Text("稍后") }
             }
         )
+    }
+
+    // 说明类弹窗：优先级 首次引导 > 更新说明 > 使用帮助，同一时刻只显示一个，避免叠加
+    when {
+        showGuide -> GuideDialog(onDismiss = { vm.dismissGuide() })
+        showWhatsNew -> WhatsNewDialog(onDismiss = { vm.dismissWhatsNew() })
+        showHelp -> HelpDialog(onDismiss = { vm.dismissHelp() })
     }
 
     Scaffold(

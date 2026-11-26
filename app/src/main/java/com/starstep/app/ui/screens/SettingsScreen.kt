@@ -52,8 +52,12 @@ fun SettingsScreen(state: AppState, vm: StarStepViewModel, onBack: () -> Unit) {
         ToggleRow("减少动态效果", "折星与展开动画降级为淡入", state.settings.reduceMotion, { vm.toggleReduceMotion() })
 
         Spacer(Modifier.height(8.dp))
+        // 使用帮助：随时回看完整说明
+        ClickRow("使用帮助", "快速上手与功能说明", onClick = { vm.openHelp() })
         // 检查更新：手动触发，结果由 ViewModel 的 update 状态驱动弹窗
         ClickRow("检查更新", "查看是否有新版本", onClick = { vm.checkUpdate() })
+        // 最近的更新说明：回看本次版本改动
+        ClickRow("最近的更新说明", "看看这次更新了什么", onClick = { vm.openWhatsNew() })
         // 意见反馈：拉起 QQ；未安装 QQ 时回退到复制号码提示
         ClickRow("意见反馈", "QQ ${UpdateChecker.FEEDBACK_QQ} · 欢迎吐槽与建议", onClick = {
             vm.openUrl(UpdateChecker.FEEDBACK_URL)

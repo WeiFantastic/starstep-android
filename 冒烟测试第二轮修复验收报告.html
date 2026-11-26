@@ -71,12 +71,20 @@
   </div>
 
   <div class="card">
+    <h2>⑤ 附带发现：回执页「写一句」无输入框 <span class="tag t-fixed">v0.3.2 已补</span></h2>
+    <table class="kv">
+      <tr><th>问题</th><td>原「写一句给自己的话」实际是 <code>foldStar("", 3)</code> 写死空串后跳只读回执页，全程无输入控件，只显示「当时没有留言」。</td></tr>
+      <tr><th>修复</th><td>改为在回执页落地编辑能力：点击「当时写的」卡片弹出真实输入框，可补写/修改留言；ViewModel 新增 <code>updateStarNote()</code> 按 id 精确更新、保存后即时刷新。因为入口在回执页，<b>从星墙点开任何新旧星星都能补写</b>，一次覆盖全部场景。</td></tr>
+      <tr><th>验证</th><td class="ok">✓ 编译通过；输入弹窗与保存链路已接通</td></tr>
+    </table>
+
+  <div class="card">
     <h2>发布与上线核验</h2>
     <table class="kv">
-      <tr><th>APK</th><td>v0.3.1 · versionCode 5 · 17 MB · aapt 校验版本号一致</td></tr>
-      <tr><th>官网</th><td><code>https://weifantastic.kicp.fun/</code> 首页、version.json、APK 均已更新为 v0.3.1，域名不变</td></tr>
-      <tr><th>GitHub</th><td><code>WeiFantastic/starstep-android</code> 已推送 commit <code>3708e92</code>（9 文件变更）</td></tr>
-      <tr><th>升级方式</th><td>老用户打开 App 会自动提示更新；已装 v0.3.0 的无需清数据，新包启动时自动迁移旧数据</td></tr>
+      <tr><th>APK</th><td>v0.3.2 · versionCode 6 · 17 MB · aapt 校验版本号一致</td></tr>
+      <tr><th>官网</th><td><code>https://weifantastic.kicp.fun/</code> 首页、version.json、APK 均已更新为 v0.3.2，域名不变</td></tr>
+      <tr><th>GitHub</th><td><code>WeiFantastic/starstep-android</code> 已推送 commit <code>3708e92</code>（第二轮 4 项）+ <code>698c549</code>（留言编辑）</td></tr>
+      <tr><th>升级方式</th><td>老用户打开 App 会自动提示更新；已装旧版无需清数据，新包启动时自动迁移旧数据</td></tr>
     </table>
   </div>
 

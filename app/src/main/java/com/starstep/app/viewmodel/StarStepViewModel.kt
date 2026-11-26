@@ -42,13 +42,62 @@ class StarStepViewModel(app: Application) : AndroidViewModel(app) {
     private val _update = MutableStateFlow<UpdateInfo?>(null)
     val update: StateFlow<UpdateInfo?> = _update.asStateFlow()
 
+    // 说明类弹窗：首次引导 / 更新说明 / 使用帮助。由界面顶层统一观察。
+    private val _showGuide = MutableStateFlow(false)
+    val showGuide: StateFlow<Boolean> = _showGuide.asStateFlow()
+    private val _showWhatsNew = MutableStateFlow(false)
+    val showWhatsNew: StateFlow<Boolean> = _showWhatsNew.asStateFlow()
+    private val _showHelp = MutableStateFlow(false)
+    val showHelp: StateFlow<Boolean> = _showHelp.asStateFlow()
+    // 首帧引导判定只做一次，避免 state 每次刷新都重弹
+    private var onboardingChecked = false
+
     init {
         viewModelScope.launch {
-            repo.state.collect { _state.value = it }
+            repo.state.collect { st ->
+                _state.value = st
+                // 状态首次就绪后判定该弹哪个：首次引导优先，其次是「本次版本更新后首次打开」
+                if (!onboardingChecked) {
+                    onboardingChecked = true
+                    if (!st.settings.hasSeenGuide) {
+                        _showGuide.value = true
+                    } else if (st.settings.lastSeenVersionCode < BuildConfig.VERSION_CODE) {
+                        _showWhatsNew.value = true
+                    }
+                }
+            }
         }
         // 启动静默检查一次（失败自动忽略，不打扰用户）
         checkUpdate()
     }
+
+    // ---------- 说明类弹窗 ----------
+
+    /** 关闭首次引导：记录已看过 + 当前版本号，避免新用户下次启动误弹更新说明 */
+    fun dismissGuide() {
+        _showGuide.value = false
+        update {
+            it.copy(
+                settings = it.settings.copy(
+                    hasSeenGuide = true,
+                    lastSeenVersionCode = BuildConfig.VERSION_CODE
+                )
+            )
+        }
+    }
+
+    /** 关闭更新说明：记录当前版本号，保证「每个版本更新后只弹一次」 */
+    fun dismissWhatsNew() {
+        _showWhatsNew.value = false
+        update { st -> st.copy(settings = st.settings.copy(lastSeenVersionCode = BuildConfig.VERSION_CODE)) }
+    }
+
+    /** 设置页手动打开使用帮助（可重复） */
+    fun openHelp() { _showHelp.value = true }
+    fun dismissHelp() { _showHelp.value = false }
+
+    /** 设置页手动打开最近更新说明（可重复打开，不改变已读版本号） */
+    fun openWhatsNew() { _showWhatsNew.value = true }
 
     /** 检查新版本。静默容错：失败不提示、不报错 */
     fun checkUpdate() {
